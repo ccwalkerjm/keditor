@@ -1,27 +1,32 @@
-import CLASS_NAMES from '../constants/classNames';
+import CSS_CLASS from '../constants/cssClass';
+import generateId from '../utils/generateId';
+import initDeviceSwitcher from './initDeviceSwitcher';
+import initTopbarRightActions from './initTopbarRightActions';
+import initTopbarExtraItems from './initTopbarExtraItems';
 
 export default function () {
     let self = this;
-    let topbarId = self.generateId();
+    let topbarId = generateId();
     let options = self.options;
     
     self.topbar = $(`
-        <div class="${CLASS_NAMES.UI} ${CLASS_NAMES.TOPBAR}" id="${topbarId}">
-            <div class="${CLASS_NAMES.UI} ${CLASS_NAMES.TOPBAR_LEFT}">
-                <div class="${CLASS_NAMES.UI} ${CLASS_NAMES.TOPBAR_TITLE}" title="${options.title}">${options.title}</div>
+        <div class="${CSS_CLASS.UI} ${CSS_CLASS.TOPBAR}" id="${topbarId}">
+            <div class="${CSS_CLASS.UI} ${CSS_CLASS.TOPBAR_LEFT}">
+                <div class="${CSS_CLASS.UI} ${CSS_CLASS.TOPBAR_TITLE}" title="${options.title}">${options.title}</div>
             </div>
-            <div class="${CLASS_NAMES.UI} ${CLASS_NAMES.TOPBAR_CENTER}">
+            <div class="${CSS_CLASS.UI} ${CSS_CLASS.TOPBAR_CENTER}">
             </div>
-            <div class="${CLASS_NAMES.UI} ${CLASS_NAMES.TOPBAR_RIGHT}">
+            <div class="${CSS_CLASS.UI} ${CSS_CLASS.TOPBAR_RIGHT}">
             </div>
         </div>
     `);
-    self.topbarLeft = self.topbar.find(`.${CLASS_NAMES.TOPBAR_LEFT}`);
-    self.topbarCenter = self.topbar.find(`.${CLASS_NAMES.TOPBAR_CENTER}`);
-    self.topbarRight = self.topbar.find(`.${CLASS_NAMES.TOPBAR_RIGHT}`);
+    self.topbarLeft = self.topbar.find(`.${CSS_CLASS.TOPBAR_LEFT}`);
+    self.topbarCenter = self.topbar.find(`.${CSS_CLASS.TOPBAR_CENTER}`);
+    self.topbarRight = self.topbar.find(`.${CSS_CLASS.TOPBAR_RIGHT}`);
     
     self.topbar.appendTo(self.wrapper);
     
-    self.initDeviceSwitcher();
-    self.initTopbarRightActions();
+    initDeviceSwitcher.call(self);
+    initTopbarRightActions.call(self);
+    initTopbarExtraItems.call(self);
 };

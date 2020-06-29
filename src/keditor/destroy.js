@@ -1,11 +1,12 @@
-import CLASS_NAMES from './constants/classNames';
+import CSS_CLASS from './constants/cssClass';
+import getContent from './getContent';
 
 export default function () {
     let self = this;
     let element = self.element;
     let id = self.id;
     
-    let content = self.getContent(false);
+    let content = getContent.call(self, false);
     self.wrapper.remove();
     
     if (element.is('textarea')) {
@@ -14,7 +15,7 @@ export default function () {
         element.html(content);
     }
     
-    element.removeClass(CLASS_NAMES.UI_HIDDEN);
+    element.removeClass(CSS_CLASS.UI_HIDDEN);
     element.data('keditor', null);
     delete KEditor.instances[id];
 };

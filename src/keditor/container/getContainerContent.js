@@ -1,12 +1,13 @@
-import CLASS_NAMES from '../constants/classNames';
+import CSS_CLASS from '../constants/cssClass';
+import getComponentContent from '../component/getComponentContent';
 
-export default function (container, isNested) {
+export default function getContainerContent (container, isNested) {
     let self = this;
-    let containerInner = container.children(`.${CLASS_NAMES.CONTAINER_INNER}`).clone();
+    let containerInner = container.children(`.${CSS_CLASS.CONTAINER_INNER}`).clone();
     
-    containerInner.find('[data-type=container-content]').not(isNested ? '' : `.${CLASS_NAMES.SUB_CONTAINER_CONTENT}`).each(function () {
+    containerInner.find('[data-type=container-content]').not(isNested ? '' : `.${CSS_CLASS.SUB_CONTAINER_CONTENT}`).each(function () {
         let containerContent = $(this);
-        containerContent.removeClass(`${CLASS_NAMES.CONTAINER_CONTENT} ${CLASS_NAMES.SUB_CONTAINER_CONTENT} ${CLASS_NAMES.SORTABLE}`).removeAttr('id');
+        containerContent.removeClass(`${CSS_CLASS.CONTAINER_CONTENT} ${CSS_CLASS.SUB_CONTAINER_CONTENT} ${CSS_CLASS.SORTABLE} ${CSS_CLASS.RESIZABLE}`).removeAttr('id');
         
         let containerContentInner = containerContent.children();
         let content = '';
@@ -14,15 +15,15 @@ export default function (container, isNested) {
         containerContentInner.children().each(function () {
             let child = $(this);
             
-            if (child.is(`.${CLASS_NAMES.COMPONENT}`)) {
-                content += self.getComponentContent(child);
-            } else if (child.is(`.${CLASS_NAMES.SUB_CONTAINER}`)) {
-                content += self.getContainerContent(child, true);
+            if (child.is(`.${CSS_CLASS.COMPONENT}`)) {
+                content += getComponentContent.call(self, child);
+            } else if (child.is(`.${CSS_CLASS.SUB_CONTAINER}`)) {
+                content += getContainerContent.call(self, child, true);
             }
         });
         
         containerContent.html(content);
     });
     
-    return `<section>${containerInner.html()}</section>`;
+    return containerInner.html();
 }

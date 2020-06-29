@@ -1,4 +1,4 @@
-import CLASS_NAMES from './classNames';
+import CSS_CLASS from './cssClass';
 
 export default {
     
@@ -7,18 +7,6 @@ export default {
      * @option {String}
      */
     title: 'Editing with KEditor',
-    
-    /*
-     * Enable nested container or not
-     * @option {Boolean}
-     */
-    nestedContainerEnabled: true,
-    
-    /*
-     * Enable explicit snippet or not. When disable, there is only one button for adding. If add button is in content area or container, you can add component or containers. If add button is in sub-container, you just can add only component. When you add component in content area, please make sure you config "containerForQuickAddComponent" option
-     * @option {Boolean}
-     */
-    explicitSnippetEnabled: false,
     
     /*
      * containerForQuickAddComponent The container snippet which will be added automatically in content are when you adding a component. Note: component will be added in first container content of container
@@ -44,27 +32,43 @@ export default {
      *     }
      * }
      * @settingName.option {String} title
-     * @settingName.option {String} content
-     * @settingName.option {jQuery|Function} trigger If pass as function, argument will be current extra setting. This function must return a jQuery object
-     * @settingName.option {Function} settingShowFunction Same arguments with "containerSettingShowFunction"
+     * @settingName.option {jQuery|Function|String} trigger If pass as function, argument will be current extra setting. This function must return a jQuery object
+     * @settingName.option {Boolean} autoInit By default, all settings form of KEditor will be initialized in first time you show it. If you want it to initialize intermediately, just set `autoIni=true`
+     * @settingName.option {Function} settingInitFunction Same arguments with `containerSettingInitFunction`
+     * @settingName.option {Function} settingShowFunction Same arguments with `containerSettingShowFunction`
      * @example:
      * {
      *     settingName1: {
      *         title: 'Page Settings',
-     *         content: '<div>This is content of page settings</div>',
      *         trigger: $('.btn-page-setting'),
-     *         settingShowFunction: function (form, container, keditor) {
+     *         autoInit: true,
+     *         settingInitFunction: function (form, keditor) {
+     *             form.append('<div>This is content of page settings</div>');
+     *         },
+     *         settingShowFunction: function (form, trigger, keditor) {
      *             // Do something
      *         }
      *     },
      *     settingName2: {
      *         title: 'Page Settings 2',
-     *         content: '<div>This is content of page settings 2</div>',
      *         triggerSelector: '.btn-page-settings',
      *         trigger: function (extraSetting) {
      *             return $(extraSetting.triggerSelector);
      *         },
-     *         settingShowFunction: function (form, container, keditor) {
+     *         settingInitFunction: function (form, keditor) {
+     *             form.append('<div>This is content of page settings 2</div>');
+     *         },
+     *         settingShowFunction: function (form, trigger, keditor) {
+     *             // Do something
+     *         }
+     *     },
+     *     settingName3: {
+     *         title: 'Page Settings 3',
+     *         trigger: '.btn-page-settings',
+     *         settingInitFunction: function (form, keditor) {
+     *             form.append('<div>This is content of page settings 3</div>');
+     *         },
+     *         settingShowFunction: function (form, trigger, keditor) {
      *             // Do something
      *         }
      *     }
@@ -73,103 +77,185 @@ export default {
     extraSettings: null,
     
     /*
-     * Text content for add content button. This available only when "explicitSippetEnabled" is "false"
-     * @option {String}
+     * Extra items in topbar
+     * @option {Array<Object>}
+     * @format:
+     * {
+     *     itemName: {
+     *         html,
+     *         click
+     *     }
+     * }
+     * @itemName.option {String} html HTML string for extra item
+     * @itemName.option {Function} click Handler for click event of extra item
      */
-    btnAddContentText: '<i class="fa fa-plus"></i>',
+    extraTopbarItems: null,
     
-    /*
-     * Text content for add container button
-     * @option {String}
-     */
-    btnAddContainerText: '<i class="fa fa-plus"></i> <i class="fa fa-fw fa-columns"></i>',
-    
-    /*
-     * Text content for add sub-container button
-     * @option {String}
-     */
-    btnAddSubContainerText: '<i class="fa fa-plus"></i> <i class="fa fa-fw fa-columns"></i>',
-    
-    /*
-     * Text content for add component button
-     * @option {String}
-     */
-    btnAddComponentText: '<i class="fa fa-plus"></i> <i class="fa fa-fw fa-list-ul"></i>',
-    
-    /*
-     * Text content for move button of container
-     * @option {String}
-     */
-    btnMoveContainerText: '<i class="fa fa-sort"></i>',
-    
-    /*
-     * Text content for move button of component
-     * @option {String}
-     */
-    btnMoveComponentText: '<i class="fa fa-arrows"></i>',
-    
-    /*
-     * Text content for setting button of container
-     * @option {String}
-     */
-    btnSettingContainerText: '<i class="fa fa-cog"></i>',
-    
-    /*
-     * Text content for setting button of component
-     * @option {String}
-     */
-    btnSettingComponentText: '<i class="fa fa-cog"></i>',
-    
-    /*
-     * Text content for duplicate button of container
-     * @option {String}
-     */
-    btnDuplicateContainerText: '<i class="fa fa-files-o"></i>',
-    
-    /*
-     * Text content for duplicate button of component
-     * @option {String}
-     */
-    btnDuplicateComponentText: '<i class="fa fa-files-o"></i>',
-    
-    /*
-     * Text content for delete button of container
-     * @option {String}
-     */
-    btnDeleteContainerText: '<i class="fa fa-times"></i>',
-    
-    /*
-     * Text content for delete button of component
-     * @option {String}
-     */
-    btnDeleteComponentText: '<i class="fa fa-times"></i>',
-    
-    /*
-     * Text content for confirm dialog when deleting container
-     * @option {String}
-     */
-    confirmDeleteContainerText: 'Are you sure that you want to delete this container? This action can not be undone!',
-    
-    /*
-     * Text content for confirm dialog when deleting container
-     * @option {String}
-     */
-    confirmDeleteComponentText: 'Are you sure that you want to delete this component? This action can not be undone!',
+    locale: {
+        /*
+         * Text title for devices switcher
+         * @option {String}
+         */
+        viewOnMobile: 'View on mobile',
+        viewOnTablet: 'View on tablet',
+        viewOnLaptop: 'View on laptop',
+        viewOnDesktop: 'View on desktop',
+        
+        /*
+         * Text title for preview mode
+         * @option {String}
+         */
+        previewOn: 'Preview ON',
+        previewOff: 'Preview OFF',
+        
+        /*
+         * Text title for fullscreen mode
+         * @option {String}
+         */
+        fullscreenOn: 'Fullscreen ON',
+        fullscreenOff: 'Fullscreen Off',
+        
+        /*
+         * Text title for save button
+         * @option {String}
+         */
+        save: 'Save',
+        
+        /*
+         * Text title for add content button
+         * @option {String}
+         */
+        addContent: 'Add content',
+        
+        /*
+         * Text title for add content button below sub-container and component
+         * @option {String}
+         */
+        addContentBelow: 'Add content below',
+        
+        /*
+         * Text title for paste content button
+         * @option {String}
+         */
+        pasteContent: 'Paste content',
+        
+        /*
+         * Text title for paste content button below sub-container and component
+         * @option {String}
+         */
+        pasteContentBelow: 'Paste content below',
+        
+        /*
+         * Text title for move button
+         * @option {String}
+         */
+        move: 'Drag',
+        
+        /*
+         * Text title for move up button
+         * @option {String}
+         */
+        moveUp: 'Move up',
+        
+        /*
+         * Text title for move down button
+         * @option {String}
+         */
+        moveDown: 'Move down',
+        
+        /*
+         * Text title for setting button
+         * @option {String}
+         */
+        setting: 'Setting',
+        
+        /*
+         * Text title for copy button
+         * @option {String}
+         */
+        copy: 'Copy',
+        
+        /*
+         * Text title for cut button
+         * @option {String}
+         */
+        cut: 'Cut',
+        
+        /*
+         * Text title for delete button
+         * @option {String}
+         */
+        delete: 'Delete',
+        
+        /*
+         * Text for snippet category label
+         * @option {String}
+         */
+        snippetCategoryLabel: 'Category',
+        
+        /*
+         * Text for snippet category `All`
+         * @option {String}
+         */
+        snippetCategoryAll: 'All',
+        
+        /*
+         * Text for snippet search text box
+         * @option {String}
+         */
+        snippetCategorySearch: 'Type to search...',
+        
+        /*
+         * Text title for bootstrap column resizer
+         * @option {String}
+         */
+        columnResizeTitle: 'Drag to resize',
+        
+        /*
+         * Text title for container setting
+         * @option {String}
+         */
+        containerSetting: 'Container Settings',
+        
+        /*
+         * Text content for confirm dialog when deleting container
+         * @option {String}
+         */
+        confirmDeleteContainerText: 'Are you sure that you want to delete this container? This action can not be undone!',
+        
+        /*
+         * Text content for confirm dialog when deleting container
+         * @option {String}
+         */
+        confirmDeleteComponentText: 'Are you sure that you want to delete this component? This action can not be undone!',
+    },
     
     /*
      * Width of mobile device
      * @option {Number}
      */
-    widthMobile: 320,
+    widthMobile: 420,
     
     /*
      * Width of tablet device
      * @option {Number}
      */
-    widthTablet: 768,
+    widthTablet: 820,
     
     /*
-     * Default component type of component. If type of component does not exist in KEditor.components, will be used "defaultComponentType" as type of this component. If is function, argument is component
+     * Width of laptop device
+     * @option {Number}
+     */
+    widthLaptop: 1050,
+    
+    /*
+     * Min width of desktop device
+     * @option {Number}
+     */
+    minWidthDesktop: 1250,
+    
+    /*
+     * Default component type of component. If type of component does not exist in KEditor.components, will be used `defaultComponentType` as type of this component. If is function, argument is component
      * @option {String|Function}
      * @param {jQuery} component
      */
@@ -211,7 +297,7 @@ export default {
      * The wrapper element for all contents inside iframe or new div which will contains content of textarea. It's just for displaying purpose. If you want all contents inside iframe are appended into body tag, just leave it as blank
      * @option {String}
      */
-    contentAreasWrapper: `<div class="${CLASS_NAMES.UI} ${CLASS_NAMES.CONTENT_AREAS_WRAPPER}"></div>`,
+    contentAreasWrapper: `<div class="${CSS_CLASS.UI} ${CSS_CLASS.CONTENT_AREAS_WRAPPER}"></div>`,
     
     /*
      * Enable setting panel for container
@@ -244,6 +330,75 @@ export default {
      */
     containerSettingHideFunction: null,
     
+    /**
+     * Bootstrap settings
+     */
+    bootstrap: {
+        /**
+         * Enable column resize by drag and drop or not. Require: jQuery UI Resizable
+         * @option {Boolean}
+         */
+        columnResizeEnabled: true,
+        
+        /**
+         * List of device class for responsive grid system
+         * @option {Object}
+         */
+        deviceClass: {
+            MOBILE: 'xs',
+            TABLET: 'sm',
+            LAPTOP: 'md',
+            DESKTOP: 'lg'
+        },
+        
+        /**
+         * Grid system of bootstrap with `width` in percentage and `col` number
+         * @option {Array<Object>}
+         */
+        gridSystem: [{
+            width: 8.33333333,
+            col: 1
+        }, {
+            width: 16.66666667,
+            col: 2
+        }, {
+            width: 25,
+            col: 3
+        }, {
+            width: 33.33333333,
+            col: 4
+        }, {
+            width: 41.66666667,
+            col: 5
+        }, {
+            width: 50,
+            col: 6
+        }, {
+            width: 58.33333333,
+            col: 7
+        }, {
+            width: 66.66666667,
+            col: 8
+        }, {
+            width: 75,
+            col: 9
+        }, {
+            width: 83.33333333,
+            col: 10
+        }, {
+            width: 91.66666667,
+            col: 11
+        }, {
+            width: 100,
+            col: 12
+        }, {
+            width: 10000,
+            col: 10000
+        }]
+    },
+    
+    clickComponentToShowSetting: false,
+    
     /*
      * Callback will be called after keditor instance is ready
      * @option {Function}
@@ -252,7 +407,7 @@ export default {
     },
     
     /*
-     * Callback will be called after clicking on "Save" button in topbar
+     * Callback will be called after clicking on `Save` button in topbar
      * @option {Function}
      * @param {String} content
      */
@@ -306,11 +461,13 @@ export default {
     },
     
     /*
-     * Callback will be called when initializing content area. It can return array of jQuery objects which will be initialized as container in content area. By default, all first level sections under content area will be initialized
+     * Callback will be called when initializing content area. Need to return jQuery objects which will be initialized as container
      * @option {Function}
      * @param {jQuery} contentArea
+     * @return {jQuery}
      */
     onInitContentArea: function (contentArea) {
+        return contentArea.children(`.${CSS_CLASS.CONTENT_AREA_INNER}`).children();
     },
     
     /*
@@ -323,7 +480,7 @@ export default {
     },
     
     /*
-     * Callback will be called when initializing container. It can return array of jQuery objects which will be initialized as editable components in container content (NOTE: these objects MUST be under elements which have attribute data-type=`container-content"). By default, all first level sections under container content will be initialized
+     * Callback will be called when initializing container. It can return array of jQuery objects which will be initialized as editable components in container content (NOTE: these objects MUST be under elements which have attribute `data-type="container-content"`). By default, all first level sections under container content will be initialized
      * @option {Function}
      * @param {jQuery} container
      * @param {jQuery} contentArea
@@ -511,4 +668,3 @@ export default {
     onDynamicContentError: function (dynamicElement, jqXHR, contentArea) {
     }
 };
-

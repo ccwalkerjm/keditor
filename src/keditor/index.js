@@ -1,60 +1,25 @@
+import '../styles/keditor.less';
+
 import $ from 'jquery';
-
 import DEFAULTS from './constants/defaults';
-
 import log from './utils/log';
+import error from './utils/error';
 import generateId from './utils/generateId';
-import generateToolbar from './utils/generateToolbar';
-import beautifyCategories from './utils/beautifyCategories';
 import getDataAttributes from './utils/getDataAttributes';
-import getClickedElement from './utils/getClickedElement';
-
-import initIframeActions from './iframe/initIframeActions';
 import initIframeCover from './iframe/initIframeCover';
-
-import initTopbar from './topbar/initTopbar';
-import initTopbarRightActions from './topbar/initTopbarRightActions';
-import initDeviceSwitcher from './topbar/initDeviceSwitcher';
-
-import initSidebar from './sidebar/initSidebar';
-import openSidebar from './sidebar/openSidebar';
-import closeSidebar from './sidebar/closeSidebar';
-import initExtraSettings from './sidebar/initExtraSettings';
-
-import renderSnippets from './snippet/renderSnippets';
-import initSnippetsFilter from './snippet/initSnippetsFilter';
 import addSnippet from './snippet/addSnippet';
-
-import initSnippetsModal from './modal/initSnippetsModal';
-import openModal from './modal/openModal';
-import closeModal from './modal/closeModal';
-
-import initContentAreaWrapper from './contentArea/initContentAreaWrapper';
-import initContentAreas from './contentArea/initContentAreas';
-import initContentArea from './contentArea/initContentArea';
-
-import convertToContainer from './container/convertToContainer';
-import initContainer from './container/initContainer';
-import initContainerContent from './container/initContainerContent';
-import getContainerContent from './container/getContainerContent';
-
-import getComponentType from './component/getComponentType';
-import convertToComponent from './component/convertToComponent';
-import initComponent from './component/initComponent';
-import initDynamicContent from './component/initDynamicContent';
-import deleteComponent from './component/deleteComponent';
-import getComponentContent from './component/getComponentContent';
-
 import init from './init';
 import destroy from './destroy';
 import getContent from './getContent';
 import setContent from './setContent';
-
-import '../styles/keditor.less';
+import initModal from './modal/initModal';
+import showModal from './modal/showModal';
+import hideModal from './modal/hideModal';
+import initDynamicContent from './component/initDynamicContent';
 
 // Check dependencies
 if (!$.fn.sortable) {
-    error('$.fn.sortable does not exist. Please import $.fn.sortable into your document for continue using KEditor.');
+    throw new Error('[ KEditor ] $.fn.sortable does not exist. Please import $.fn.sortable into your document for continue using KEditor.');
 }
 
 window.KEDITOR_DEBUG = true;
@@ -71,214 +36,175 @@ class KEditor {
         }
     };
     
+    settingComponent = null;
+    settingContainer = null;
+    
+    copyContent = null;
+    cutContent = null;
+    
+    categoryComponent = [];
+    categoryContainer = [];
+    
+    constructor(target, config) {
+        init.apply(this, [target, config]);
+    }
+    
+    /**
+     * Log utility of KEditor with `[ KEditor ] ` as prefix. You can see the log when `window.KEDITOR_DEBUG = true`
+     * @param {*} args Values you want to log
+     */
     static log(...args) {
-        return log.apply(null, args);
+        log(...args);
     }
     
+    /**
+     * Throw error with `[ KEditor ] ` as prefix for message
+     * @param {String} message Error message
+     */
     static error(message) {
-        throw new Error(`[ KEditor ] ${message}`);
+        error(message);
     }
     
+    /**
+     * Initialize KEditor instance
+     * @param {jQuery} target Element which you want to initialize as KEditor
+     * @param {Object} config Configuration of KEditor instance. See https://github.com/Kademi/keditor/blob/master/docs/configuration.md for more details
+     * @return {KEditor}
+     */
     static init(target, config) {
         return new KEditor(target, config);
     }
     
-    constructor(target, config) {
-        return init.apply(this, [target, config]);
+    /**
+     * Load dynamic content for elements which have `data-dynamic-href` attribute
+     * @param {jQuery} dynamicElement jQuery object of element(s) which you want to load dynamic content. Element(s) must have `data-dynamic-href` attribute
+     * @param {Object} options Callbacks include `onSuccess` and `onError` with arguments are `dynamicElement` and `jqXHR`
+     */
+    static loadDynamicContent(dynamicElement, options = {}) {
+        dynamicElement.each(function () {
+            initDynamicContent.call({
+                options: {
+                    onDynamicContentLoaded: options.onSuccess,
+                    onDynamicContentError: options.onError
+                }
+            }, $(this));
+        });
     }
     
-    generateId() {
-        return generateId();
-    }
-    
-    generateToolbar(type, isComponentConfigurable) {
-        return generateToolbar.apply(this, [type, isComponentConfigurable]);
-    }
-    
-    beautifyCategories(categories) {
-        return beautifyCategories.apply(this, [categories]);
-    }
-    
-    setSettingContainer(container) {
-        this.settingContainer = container;
-    }
-    
+    /**
+     * Get container which is setting-up
+     * @return {jQuery}
+     */
     getSettingContainer() {
         return this.settingContainer;
     }
     
-    setSettingComponent(component) {
-        this.settingComponent = component;
-    }
-    
+    /**
+     * Get component which is setting-up
+     * @return {jQuery}
+     */
     getSettingComponent() {
         return this.settingComponent;
     }
     
+    /**
+     * Generate a random Id
+     * @return {String}
+     */
+    generateId() {
+        return generateId();
+    }
+    
+    /**
+     * Get list of `data-*` attributes
+     * @param {jQuery} target jQuery of elements which you want to get list of `data-*` attributes
+     * @param {Array<String>} ignoreAttributes Array of attributes you want to ignore
+     * @param {Boolean} isArray Return list as Array or Object
+     * @return {Array|Object}
+     */
     getDataAttributes(target, ignoreAttributes, isArray) {
         return getDataAttributes.apply(this, [target, ignoreAttributes, isArray]);
     }
     
-    getComponentType(component) {
-        return getComponentType.apply(this, [component]);
-    }
-    
-    getClickedElement(event, selector) {
-        return getClickedElement.apply(this, [event, selector]);
-    }
-    
-    // Iframe
-    //---------------------------------
+    /**
+     * Init iframe cover which avoid iframe's z-index issue in IE browsers
+     * @param {jQuery} iframe Iframe which you want to add cover for
+     * @param {jQuery} wrapper Wrapper of iframe
+     */
     initIframeCover(iframe, wrapper) {
-        return initIframeCover.apply(this, [iframe, wrapper]);
+        initIframeCover.apply(this, [iframe, wrapper]);
     }
     
-    // KEditor clicks
-    //---------------------------------
-    initIframeActions() {
-        return initIframeActions.apply(this);
+    /**
+     * Init KEditor modal
+     * @param {String} modalId Id of modal
+     * @param {Boolean} hasFooter Modal has footer or not
+     * @param {Boolean} disableOriginEvents If you want to handle close button by yourself, just set it as `false`
+     * @return {jQuery}
+     */
+    initModal(modalId, hasFooter, disableOriginEvents) {
+        return initModal.call(this, modalId, hasFooter, disableOriginEvents);
     }
     
-    // Topbar
-    //---------------------------------
-    initTopbar() {
-        return initTopbar.apply(this);
+    /**
+     * Show a KEditor modal
+     * @param {jQuery} modal Modal you want to show
+     */
+    showModal(modal) {
+        showModal.call(this, modal);
     }
     
-    initDeviceSwitcher() {
-        return initDeviceSwitcher.apply(this);
+    /**
+     * Hide a KEditor modal
+     * @param {jQuery} modal Modal you want to show
+     */
+    hideModal(modal) {
+        hideModal.call(this, modal);
     }
     
-    initTopbarRightActions() {
-        return initTopbarRightActions.apply(this);
-    }
-    
-    // Sidebar
-    //---------------------------------
-    initSidebar() {
-        return initSidebar.apply(this);
-    }
-    
-    openSidebar(target) {
-        return openSidebar.apply(this, [target]);
-    }
-    
-    closeSidebar() {
-        return closeSidebar.apply(this);
-    }
-    
-    initExtraSettings() {
-        return initExtraSettings.apply(this);
-    }
-    
-    // Legacy methods. DEPRECATED
-    //---------------------------------
-    showSettingPanel(target) {
-        this.openSidebar(target);
-    }
-    
-    hideSettingPanel() {
-        this.closeSidebar();
-    }
-    
-    // Snippet modal
-    //---------------------------------
-    initSnippetsModal() {
-        return initSnippetsModal.apply(this);
-    }
-    
-    renderSnippets(resp) {
-        return renderSnippets.apply(this, [resp]);
-    }
-    
-    initSnippetsFilter() {
-        return initSnippetsFilter.apply(this);
-    }
-    
-    openModal(target, showComponent, showContainer) {
-        return openModal.apply(this, [target, showComponent, showContainer]);
-    }
-    
-    closeModal() {
-        return closeModal.apply(this);
-    }
-    
-    // Content areas
-    //---------------------------------
-    initContentAreaWrapper() {
-        return initContentAreaWrapper.apply(this);
-    }
-    
-    initContentAreas() {
-        return initContentAreas.apply(this);
-    }
-    
-    initContentArea(contentArea, dontInitToolbar) {
-        return initContentArea.apply(this, [contentArea, dontInitToolbar]);
-    }
-    
-    // Containers
-    //---------------------------------
-    convertToContainer(contentArea, target) {
-        return convertToContainer.apply(this, [contentArea, target]);
-    }
-    
-    initContainer(contentArea, container) {
-        return initContainer.apply(this, [contentArea, container]);
-    }
-    
-    initContainerContent(contentArea, container, containerContent, isNested) {
-        return initContainerContent.apply(this, [contentArea, container, containerContent, isNested]);
-    }
-    
-    // Components
-    //---------------------------------
-    convertToComponent(contentArea, container, target, isExisting) {
-        return convertToComponent.apply(this, [contentArea, container, target, isExisting]);
-    }
-    
-    initComponent(contentArea, container, component) {
-        return initComponent.apply(this, [contentArea, container, component]);
-    }
-    
-    initDynamicContent(dynamicElement) {
-        return initDynamicContent.apply(this, [dynamicElement]);
-    }
-    
-    deleteComponent(component) {
-        return deleteComponent.apply(this, [component]);
-    }
-    
-    // Get content
-    //---------------------------------
-    getComponentContent(component) {
-        return getComponentContent.apply(this, [component]);
-    }
-    
-    getContainerContent(container, isNested) {
-        return getContainerContent.apply(this, [container, isNested]);
-    }
-    
+    /**
+     * @param {Boolean} inArray Return your content in array format or just plain string
+     * @return {String|Array<String>}
+     */
     getContent(inArray) {
         return getContent.apply(this, [inArray]);
     }
     
-    // Set content
-    //---------------------------------
+    /**
+     * @param {String} content HTML content
+     * @param {String|jQuery} contentArea Can be selector or jQuery object of content area which you want to set new content. If you have only a content area, you can leave it blank
+     */
     setContent(content, contentArea) {
-        return setContent.apply(this, [content, contentArea]);
+        setContent.apply(this, [content, contentArea]);
     }
     
-    // Destroy
-    //---------------------------------
+    /**
+     * Removes the KEditor functionality completely. This will return the element back to its pre-init state with latest content
+     */
     destroy() {
-        return destroy.apply(this);
+        destroy.apply(this);
     }
     
-    // Snippet
-    //---------------------------------
-    addSnippet(type, title, previewUrl, categories, content, dataAttributes) {
-        return addSnippet.apply(this, [type, title, previewUrl, categories, content, dataAttributes]);
+    /**
+     * Add snippet programmatically
+     * @param {String} type Type of snippet. Can be `container` or `component-*`
+     * @param {String} title Text title of snippet
+     * @param {String} previewUrl Url to preview image of snippet
+     * @param {String} categories Categories list of snippet, separated by `snippetsCategoriesSeparator` option
+     * @param {String} content HTML content of snippet
+     * @param {Array<String>} extraAttrs If you component contains dynamic content, you will need this parameter to add `data-*` attribute to your component
+     */
+    addSnippet(type, title, previewUrl, categories, content, extraAttrs) {
+        addSnippet.apply(this, [type, title, previewUrl, categories, content, extraAttrs]);
+    }
+    
+    /**
+     * Load dynamic content for elements which have `data-dynamic-href` attribute
+     * @param {jQuery} dynamicElement jQuery object of element(s) which you want to load dynamic content. Element(s) must have `data-dynamic-href` attribute
+     * @return {jqXHR}
+     */
+    initDynamicContent(dynamicElement) {
+        return initDynamicContent.apply(this, [dynamicElement]);
     }
 }
 

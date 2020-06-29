@@ -1,31 +1,32 @@
-import CLASS_NAMES from '../constants/classNames';
+import CSS_CLASS from '../constants/cssClass';
+import generateId from '../utils/generateId';
 
-export default function (type, title, previewUrl, categories, content, extraData) {
+export default function (type, title, previewUrl, categories, content, extraAttrs) {
     let self = this;
     let options = self.options;
-    let snippetId = self.generateId();
+    let snippetId = generateId();
     let snippetPreviewHtml = `
         <section
-            class="${CLASS_NAMES.UI} ${CLASS_NAMES.SNIPPET} ${type === 'container' ? CLASS_NAMES.SNIPPET_CONTAINER : CLASS_NAMES.SNIPPET_COMPONENT}"
+            class="${CSS_CLASS.UI} ${CSS_CLASS.SNIPPET} ${type === 'container' ? CSS_CLASS.SNIPPET_CONTAINER : CSS_CLASS.SNIPPET_COMPONENT}"
             data-snippet="#${snippetId}"
             data-type="${type}"
             data-keditor-title="${title}"
             data-keditor-categories="${categories}"
         >
-            <span class="${CLASS_NAMES.SNIPPET_INNER}">
-                <span class="${CLASS_NAMES.SNIPPET_PREVIEW}" style="background-image: url('${previewUrl}')"></span>
-                <span class="${CLASS_NAMES.SNIPPET_TITLE}" title="${title}">${title}</span>
+            <span class="${CSS_CLASS.SNIPPET_INNER}">
+                <span class="${CSS_CLASS.SNIPPET_PREVIEW}" style="background-image: url('${previewUrl}')"></span>
+                <span class="${CSS_CLASS.SNIPPET_TITLE}" title="${title}">${title}</span>
             </span>
         </section>
     `;
-    let snippetContentHtml = `<script id="${snippetId}" type="text/html" ${extraData.join(' ')}>${content}</script>`;
+    let snippetContentHtml = `<script id="${snippetId}" type="text/html" ${extraAttrs.join(' ')}>${content}</script>`;
     
     categories = categories.split(options.snippetsCategoriesSeparator);
     
     if (type === 'container') {
-        self.snippetsContainerCategories = self.snippetsContainerCategories.concat(categories);
+        self.categoryContainer = self.categoryContainer.concat(categories);
     } else if (type.indexOf('component') !== -1) {
-        self.snippetsComponentCategories = self.snippetsComponentCategories.concat(categories);
+        self.categoryComponent = self.categoryComponent.concat(categories);
     }
     
     return [

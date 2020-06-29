@@ -1,78 +1,25 @@
-import CLASS_NAMES from '../constants/classNames';
+import CSS_CLASS from '../constants/cssClass';
+import getComponentType from '../component/getComponentType';
+import SETTING_CATEGORY from '../constants/settingCategory';
+import showSettingForm from './showSettingForm';
+import log from '../utils/log';
 
 export default function (target) {
+    log('openSidebar', target);
+    
     let self = this;
     let options = self.options;
-    let sidebar = self.sidebar;
-    let sidebarTitle = sidebar.find(`.${CLASS_NAMES.SIDEBAR_TITLE}`);
-    let sidebarBody = sidebar.find(`.${CLASS_NAMES.SIDEBAR_BODY}`);
-    let activeForm = sidebarBody.children(`.${CLASS_NAMES.STATE_ACTIVE}`);
-    activeForm.removeClass(CLASS_NAMES.STATE_ACTIVE);
     
-    if (target.is(`.${CLASS_NAMES.COMPONENT}`)) {
-        self.setSettingComponent(target);
-        self.setSettingContainer(null);
-        
-        let componentType = self.getComponentType(target);
+    if (target.is(`.${CSS_CLASS.COMPONENT}`)) {
+        let componentType = getComponentType.call(self, target);
         let componentData = KEditor.components[componentType];
-        sidebarTitle.html(componentData.settingTitle);
-        
-        let settingFormClass = `${CLASS_NAMES.SETTING}-${componentType}`;
-        let settingForm = sidebarBody.find(`.${settingFormClass}`);
-        
-        if (settingForm.length === 0) {
-            let componentData = KEditor.components[componentType];
-            if (typeof componentData.initSettingForm === 'function') {
-                settingForm = $(`
-                    <div
-                        data-type="${componentType}"
-                        class="${CLASS_NAMES.UI} ${CLASS_NAMES.SETTING_FORM} ${settingFormClass} ${CLASS_NAMES.STATE_ACTIVE}"
-                    >
-                    </div>
-                `);
-                let loadingText = $('<span />').html('Loading...');
-                sidebarBody.append(settingForm);
-                settingForm.append(loadingText);
-                
-                let initFunction = componentData.initSettingForm.call(componentData, settingForm, self);
-                $.when(initFunction).done(function () {
-                    setTimeout(function () {
-                        loadingText.remove();
-                        
-                        if (typeof componentData.showSettingForm === 'function') {
-                            componentData.showSettingForm.call(componentData, settingForm, target, self);
-                        }
-                    }, 100);
-                });
-            }
-        } else {
-            if (typeof componentData.showSettingForm === 'function') {
-                componentData.showSettingForm.call(componentData, settingForm, target, self);
-            }
-            settingForm.addClass(CLASS_NAMES.STATE_ACTIVE);
-        }
-    } else if (target.is(`${CLASS_NAMES.CONTAINER}`)) {
-        self.setSettingContainer(target);
-        self.setSettingComponent(null);
-        
-        sidebarTitle.html('Container Settings');
-        
-        let settingForm = sidebar.find(`.${CLASS_NAMES.SETTING_CONTAINER}`);
-        if (typeof options.containerSettingShowFunction === 'function') {
-            options.containerSettingShowFunction.call(self, settingForm, target, self);
-        }
-        settingForm.addClass(CLASS_NAMES.STATE_ACTIVE);
-    } else {
-        // should be extra tabs
-        let extraKey = target.attr('data-extra-setting');
-        let extraTabData = options.extraSettings[extraKey];
-        
-        sidebarTitle.html(extraTabData.title);
-        
-        let settingForm = sidebar.find(`.${CLASS_NAMES.SETTING_EXTRA}[data-extra-setting=${extraKey}]`);
-        typeof extraTabData.settingShowFunction === 'function' && extraTabData.settingShowFunction.call(self, settingForm, target, self);
-        settingForm.addClass(CLASS_NAMES.STATE_ACTIVE);
-    }
     
-    sidebar.addClass(CLASS_NAMES.STATE_OPENED);
+        showSettingForm.call(self, target, componentType, SETTING_CATEGORY.COMPONENT, componentData.settingTitle, componentData.initSettingForm, componentData.showSettingForm, componentData);
+    } else if (target.is(`.${CSS_CLASS.CONTAINER}`)) {
+        showSettingForm.call(self, target, null, SETTING_CATEGORY.CONTAINER, options.locale.containerSetting, options.containerSettingInitFunction, options.containerSettingShowFunction, self);
+    } else {
+        let extraKey = target.attr('data-extra-setting');
+        let extraSetting = options.extraSettings[extraKey];
+        showSettingForm.call(self, target, extraKey, SETTING_CATEGORY.EXTRA, extraSetting.title, extraSetting.settingInitFunction, extraSetting.settingShowFunction, extraSetting);
+    }
 };

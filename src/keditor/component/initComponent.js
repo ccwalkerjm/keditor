@@ -1,30 +1,37 @@
 import TOOLBAR_TYPE from '../constants/toolbarType';
-import CLASS_NAMES from '../constants/classNames';
+import CSS_CLASS from '../constants/cssClass';
+import generateId from '../utils/generateId';
+import generateToolbar from '../utils/generateToolbar';
+import getComponentType from './getComponentType';
+import initDynamicContent from './initDynamicContent';
 
-export default function (contentArea, container, component) {
+export default function (component) {
     let self = this;
     let options = self.options;
+    let container = component.closest(`.${CSS_CLASS.CONTAINER}`);
+    let contentArea = container.closest(`.${CSS_CLASS.CONTENT_AREA}`);
     
-    if (!component.hasClass(CLASS_NAMES.STATE_INITIALIZED) || !component.hasClass(CLASS_NAMES.STATE_INITIALIZING)) {
-        component.addClass(CLASS_NAMES.STATE_INITIALIZING);
-        component.attr('id', self.generateId());
+    if (!component.hasClass(CSS_CLASS.STATE_INITIALIZED) || !component.hasClass(CSS_CLASS.STATE_INITIALIZING)) {
+        component.addClass(CSS_CLASS.STATE_INITIALIZING);
+        component.attr('id', generateId());
         
         if (typeof options.onBeforeInitComponent === 'function') {
             options.onBeforeInitComponent.call(self, component, contentArea);
         }
         
-        let componentContent = component.children(`.${CLASS_NAMES.COMPONENT_CONTENT}`);
-        componentContent.attr('id', self.generateId());
+        let componentContent = component.children(`.${CSS_CLASS.COMPONENT_CONTENT}`);
+        componentContent.attr('id', generateId());
         
-        let componentType = self.getComponentType(component);
+        let componentType = getComponentType.call(self, component);
         let componentData = KEditor.components[componentType];
         
-        component.append(self.generateToolbar(TOOLBAR_TYPE.COMPONENT, componentData.settingEnabled));
+        component.append(generateToolbar.call(self, TOOLBAR_TYPE.COMPONENT, componentData.settingEnabled));
+        component.append(generateToolbar.call(self, TOOLBAR_TYPE.COMPONENT_BOTTOM));
         
         component.find('[data-dynamic-href]').each(function () {
             let dynamicElement = $(this);
             
-            self.initDynamicContent(dynamicElement);
+            initDynamicContent.call(self, dynamicElement);
         });
         
         if (typeof componentData.init === 'function') {
@@ -35,7 +42,7 @@ export default function (contentArea, container, component) {
             options.onInitComponent.call(self, component, contentArea);
         }
         
-        component.addClass(CLASS_NAMES.STATE_INITIALIZED);
-        component.removeClass(CLASS_NAMES.STATE_INITIALIZING);
+        component.addClass(CSS_CLASS.STATE_INITIALIZED);
+        component.removeClass(CSS_CLASS.STATE_INITIALIZING);
     }
 };

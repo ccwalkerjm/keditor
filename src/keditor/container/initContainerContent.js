@@ -1,51 +1,40 @@
 import TOOLBAR_TYPE from '../constants/toolbarType';
-import CLASS_NAMES from '../constants/classNames';
+import CSS_CLASS from '../constants/cssClass';
+import ACTION_TYPE from '../constants/actionType';
+import showSnippetModal from '../modal/showSnippetModal';
+import generateId from '../utils/generateId';
+import generateToolbar from '../utils/generateToolbar';
+import convertToContainer from './convertToContainer';
+import convertToComponent from '../component/convertToComponent';
 
 export default function (contentArea, container, containerContent, isNested) {
     let self = this;
     let options = self.options;
     let contentAreasWrapper = self.contentAreasWrapper;
     
-    containerContent.addClass(CLASS_NAMES.CONTAINER_CONTENT);
-    isNested && containerContent.addClass(CLASS_NAMES.SUB_CONTAINER_CONTENT);
-    containerContent.attr('id', self.generateId());
+    containerContent.addClass(CSS_CLASS.CONTAINER_CONTENT);
+    isNested && containerContent.addClass(CSS_CLASS.SUB_CONTAINER_CONTENT);
+    containerContent.attr('id', generateId());
     
-    let containerContentInner = $(`<div class="${CLASS_NAMES.CONTAINER_CONTENT_INNER}"></div>`);
+    let containerContentInner = $(`<div class="${CSS_CLASS.CONTAINER_CONTENT_INNER}"></div>`);
     containerContentInner.html(containerContent.html());
     containerContent.html(containerContentInner);
     
-    let containerContentToolbar = $(self.generateToolbar(isNested ? TOOLBAR_TYPE.SUB_CONTAINER_CONTENT : TOOLBAR_TYPE.CONTAINER_CONTENT));
+    let containerContentToolbar = $(
+        generateToolbar.call(self, isNested ? TOOLBAR_TYPE.SUB_CONTAINER_CONTENT : TOOLBAR_TYPE.CONTAINER_CONTENT, options.containerSettingEnabled)
+    );
     containerContentToolbar.appendTo(containerContent);
-    
-    if (options.explicitSnippetEnabled) {
-        if (!isNested) {
-            if (options.explicitSnippetEnabled) {
-                containerContentToolbar.children(`.${CLASS_NAMES.ADD_CONTAINER}`).on('click', function (e) {
-                    e.preventDefault();
-                    
-                    self.openModal(containerContentInner, false, true);
-                });
-            }
-        }
+    containerContentToolbar.children(`.${CSS_CLASS.ADD_CONTENT}`).on('click', function (e) {
+        e.preventDefault();
         
-        containerContentToolbar.children(`.${CLASS_NAMES.ADD_COMPONENT}`).on('click', function (e) {
-            e.preventDefault();
-            
-            self.openModal(containerContentInner, true, false);
-        });
-    } else {
-        containerContentToolbar.children(`.${CLASS_NAMES.ADD_CONTENT}`).on('click', function (e) {
-            e.preventDefault();
-            
-            self.openModal(containerContentInner, true,  !isNested && options.nestedContainerEnabled);
-        });
-    }
+        showSnippetModal.call(self, containerContentInner, ACTION_TYPE.APPEND, true, !isNested);
+    });
     
     containerContentInner.sortable({
-        handle: `.${CLASS_NAMES.COMPONENT_REPOSITION} .${CLASS_NAMES.CONTAINER_REPOSITION}`,
+        handle: `.${CSS_CLASS.COMPONENT_MOVE}, .${CSS_CLASS.CONTAINER_MOVE}`,
         helper: 'clone',
-        items: '> section',
-        connectWith: `.${CLASS_NAMES.CONTAINER_CONTENT_INNER}`,
+        items: `> .${CSS_CLASS.COMPONENT}`,
+        connectWith: `.${CSS_CLASS.CONTAINER_CONTENT_INNER}`,
         tolerance: 'pointer',
         receive: function (event, ui) {
             let helper = ui.helper;
@@ -55,11 +44,11 @@ export default function (contentArea, container, containerContent, isNested) {
             if (helper) {
                 helper.remove();
             }
-            container = item.closest(`.${CLASS_NAMES.CONTAINER}`);
+            container = item.closest(`.${CSS_CLASS.CONTAINER}`);
             
-            if (!container.hasClass(CLASS_NAMES.STATE_TOOLBAR_SHOWED)) {
-                contentAreasWrapper.find(`.${CLASS_NAMES.CONTAINER}.${CLASS_NAMES.STATE_TOOLBAR_SHOWED}`).removeClass(CLASS_NAMES.STATE_TOOLBAR_SHOWED);
-                container.addClass(CLASS_NAMES.STATE_TOOLBAR_SHOWED);
+            if (!container.hasClass(CSS_CLASS.STATE_TOOLBAR_SHOWED)) {
+                contentAreasWrapper.find(`.${CSS_CLASS.CONTAINER}.${CSS_CLASS.STATE_TOOLBAR_SHOWED}`).removeClass(CSS_CLASS.STATE_TOOLBAR_SHOWED);
+                container.addClass(CSS_CLASS.STATE_TOOLBAR_SHOWED);
             }
             
             if (typeof options.onContainerChanged === 'function') {
@@ -70,16 +59,17 @@ export default function (contentArea, container, containerContent, isNested) {
                 options.onContentChanged.call(self, event, contentArea);
             }
             
-            item.removeClass(CLASS_NAMES.UI_DRAGGING);
+            item.removeClass(CSS_CLASS.UI_DRAGGING);
         },
         start: function (e, ui) {
-            ui.item.addClass(CLASS_NAMES.UI_DRAGGING);
+            ui.item.addClass(CSS_CLASS.UI_DRAGGING);
+            ui.item.addClass(CSS_CLASS.STATE_TOOLBAR_SHOWED);
         },
         stop: function (e, ui) {
             if (ui.helper) {
                 ui.helper.remove();
             }
-            ui.item.removeClass(CLASS_NAMES.UI_DRAGGING);
+            ui.item.removeClass(CSS_CLASS.UI_DRAGGING);
         }
     });
     
@@ -87,9 +77,9 @@ export default function (contentArea, container, containerContent, isNested) {
         let child = $(this);
         
         if (child.find('[data-type="container-content"]').length > 0) {
-            self.convertToContainer(contentArea, child);
+            convertToContainer.call(self, child);
         } else {
-            self.convertToComponent(contentArea, container, child, true);
+            convertToComponent.call(self, child, true);
         }
     });
 };

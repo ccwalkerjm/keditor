@@ -1,31 +1,45 @@
-import CLASS_NAMES from '../constants/classNames';
+import CSS_CLASS from '../constants/cssClass';
+import SETTING_CATEGORY from '../constants/settingCategory';
+import log from '../utils/log';
 
 export default function () {
+    log('closeSidebar');
+    
     let self = this;
     let options = self.options;
     let sidebar = self.sidebar;
-    let activeForm = sidebar.find(`.${CLASS_NAMES.SIDEBAR_BODY}`).children(`.${CLASS_NAMES.STATE_ACTIVE}`);
+    let activeForm = self.sidebarBody.children(`.${CSS_CLASS.STATE_ACTIVE}`);
     
     if (activeForm.length > 0) {
-        if (activeForm.is(`.${CLASS_NAMES.SETTING_CONTAINER}`)) {
-            if (typeof options.containerSettingHideFunction === 'function') {
-                options.containerSettingHideFunction.call(self, activeForm, self);
-            }
-        } else if (activeForm.is('[data-type]')) {
-            let activeType = activeForm.attr('data-type');
-            let componentData = KEditor.components[activeType];
+        switch (activeForm.attr('[data-setting-category]')) {
+            case SETTING_CATEGORY.CONTAINER:
+                if (typeof options.containerSettingHideFunction === 'function') {
+                    options.containerSettingHideFunction.call(self, activeForm, self);
+                }
+                break;
             
-            if (typeof componentData.hideSettingForm === 'function') {
-                componentData.hideSettingForm.call(componentData, activeForm, self);
-            }
-        } else if (activeForm.is('[data-extra-setting]')) {
-            // TODO: Will add method when hiding setting for Extra setting
+            case SETTING_CATEGORY.COMPONENT:
+                let activeType = activeForm.attr('data-type');
+                let componentData = KEditor.components[activeType];
+                
+                if (typeof componentData.hideSettingForm === 'function') {
+                    componentData.hideSettingForm.call(componentData, activeForm, self);
+                }
+                break;
+            
+            case SETTING_CATEGORY.EXTRA:
+                // TODO: Will add method when hiding setting for Extra setting
+                break;
+            
+            default:
+            // Do nothing
         }
         
-        activeForm.removeClass(CLASS_NAMES.STATE_ACTIVE);
+        activeForm.removeClass(CSS_CLASS.STATE_ACTIVE);
     }
     
-    self.setSettingComponent(null);
-    self.setSettingContainer(null);
-    sidebar.removeClass(CLASS_NAMES.STATE_OPENED);
+    self.settingComponent = null;
+    self.settingContainer = null;
+    sidebar.removeClass(CSS_CLASS.STATE_OPENED);
+    self.iframeBody.removeClass(CSS_CLASS.STATE_SIDEBAR_SHOWED);
 }

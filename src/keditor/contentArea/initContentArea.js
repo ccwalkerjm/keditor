@@ -1,13 +1,18 @@
 import TOOLBAR_TYPE from '../constants/toolbarType';
-import CLASS_NAMES from '../constants/classNames';
+import CSS_CLASS from '../constants/cssClass';
+import ACTION_TYPE from '../constants/actionType';
+import showSnippetModal from '../modal/showSnippetModal';
+import generateToolbar from '../utils/generateToolbar';
+import closeSidebar from '../sidebar/closeSidebar';
+import convertToContainer from '../container/convertToContainer';
 
 export default function (contentArea, dontInitToolbar) {
     let self = this;
     let options = self.options;
     
-    contentArea.addClass(CLASS_NAMES.CONTENT_AREA);
+    contentArea.addClass(CSS_CLASS.CONTENT_AREA);
     let content = contentArea.html();
-    let contentAreaInner = $(`<div class="${CLASS_NAMES.CONTENT_AREA_INNER}"></div>`).html(content);
+    let contentAreaInner = $(`<div class="${CSS_CLASS.CONTENT_AREA_INNER}"></div>`).html(content);
     contentArea.html(contentAreaInner);
     
     if (typeof options.onBeforeInitContentArea === 'function') {
@@ -15,20 +20,20 @@ export default function (contentArea, dontInitToolbar) {
     }
     
     if (!dontInitToolbar) {
-        let contentAreaToolbar = $(self.generateToolbar(TOOLBAR_TYPE.CONTENT_AREA));
+        let contentAreaToolbar = $(generateToolbar.call(self, TOOLBAR_TYPE.CONTENT_AREA));
         contentArea.append(contentAreaToolbar);
-        contentAreaToolbar.children(options.explicitSnippetEnabled ? `.${CLASS_NAMES.ADD_CONTAINER}` : `.${CLASS_NAMES.ADD_CONTENT}`).on('click', function (e) {
+        contentAreaToolbar.children(`.${CSS_CLASS.ADD_CONTENT}`).on('click', function (e) {
             e.preventDefault();
-            
-            self.openModal(contentAreaInner, !options.explicitSnippetEnabled, true);
+    
+            showSnippetModal.call(self, contentAreaInner, ACTION_TYPE.APPEND, true, true);
         });
     }
     
     contentAreaInner.sortable({
-        handle: `.${CLASS_NAMES.CONTAINER_TOOLBAR}:not(.${CLASS_NAMES.SUB_CONTAINER_TOOLBAR}) .${CLASS_NAMES.CONTAINER_REPOSITION}`,
-        items: '> section',
+        handle: `.${CSS_CLASS.TOOLBAR_CONTAINER}:not(.${CSS_CLASS.TOOLBAR_SUB_CONTAINER}) .${CSS_CLASS.CONTAINER_MOVE}`,
+        items: `> .${CSS_CLASS.CONTAINER}`,
         helper: 'clone',
-        connectWith: `.${CLASS_NAMES.CONTENT_AREA}`,
+        connectWith: `.${CSS_CLASS.CONTENT_AREA}`,
         axis: 'y',
         tolerance: 'pointer',
         receive: function (event, ui) {
@@ -39,35 +44,34 @@ export default function (contentArea, dontInitToolbar) {
                 helper.remove();
             }
             
-            self.closeSidebar();
+            closeSidebar.call(self);
             
             if (typeof options.onContentChanged === 'function') {
                 options.onContentChanged.call(self, event, contentArea);
             }
             
-            item.addClass(CLASS_NAMES.UI_DRAGGING);
+            item.addClass(CSS_CLASS.UI_DRAGGING);
         },
         start: function (e, ui) {
-            ui.item.addClass(CLASS_NAMES.UI_DRAGGING);
+            ui.item.addClass(CSS_CLASS.UI_DRAGGING);
+            ui.item.addClass(CSS_CLASS.STATE_TOOLBAR_SHOWED);
         },
         stop: function (e, ui) {
             if (ui.helper) {
                 ui.helper.remove();
             }
-            ui.item.removeClass(CLASS_NAMES.UI_DRAGGING);
+            ui.item.removeClass(CSS_CLASS.UI_DRAGGING);
         }
     });
     
-    contentAreaInner.children('section').each(function () {
-        self.convertToContainer(contentArea, $(this));
-    });
-    
+    let containers;
     if (typeof options.onInitContentArea === 'function') {
-        let contentData = options.onInitContentArea.call(self, contentArea);
-        if (contentData && contentData.length > 0) {
-            $.each(contentData, function () {
-                self.convertToContainer(contentArea, $(this));
-            });
-        }
+        containers = options.onInitContentArea.call(self, contentArea);
+    } else {
+        containers = contentAreaInner.children();
     }
+    
+    containers.each(function () {
+        convertToContainer.call(self, $(this));
+    });
 };

@@ -1,13 +1,11 @@
 import renderSnippet from './renderSnippet';
-import CLASS_NAMES from '../constants/classNames';
+import CSS_CLASS from '../constants/cssClass';
+import beautifyCategories from './beautifyCategories';
 
 export default function (resp) {
     let self = this;
     let snippetsContentHtml = '';
     let snippetsHtml = '';
-    
-    self.snippetsContainerCategories = [];
-    self.snippetsComponentCategories = [];
     
     $(resp).filter('div').each(function () {
         let snippet = $(this);
@@ -26,9 +24,9 @@ export default function (resp) {
         snippetsContentHtml += snippetContentHtml;
     });
     
-    self.snippetsContainerCategories = self.beautifyCategories(self.snippetsContainerCategories);
-    self.snippetsComponentCategories = self.beautifyCategories(self.snippetsComponentCategories);
+    self.categoryContainer = beautifyCategories(self.categoryContainer);
+    self.categoryComponent = beautifyCategories(self.categoryComponent);
     
-    self.modal.find(`.${CLASS_NAMES.SNIPPETS}`).html(snippetsHtml);
-    self.modal.find(`.${CLASS_NAMES.MODAL_BODY}`).append(snippetsContentHtml);
+    self.modal.find(`.${CSS_CLASS.SNIPPETS}`).html(snippetsHtml);
+    self.modal.find(`.${CSS_CLASS.MODAL_BODY}`).append(snippetsContentHtml);
 };

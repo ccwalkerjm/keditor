@@ -1,21 +1,24 @@
-import CLASS_NAMES from './constants/classNames';
+import CSS_CLASS from './constants/cssClass';
+import initContentArea from './contentArea/initContentArea';
+import error from './utils/error';
 
 export default function (content, contentArea) {
     let self = this;
-    let contentAreasWrapper = self.wrapper;
+    let contentAreasWrapper = self.contentAreasWrapper;
+    let target;
     
     if (!contentArea) {
-        contentArea = contentAreasWrapper.children(`.${CLASS_NAMES.CONTENT_AREA}`);
+        target = contentAreasWrapper.children(`.${CSS_CLASS.CONTENT_AREA}`);
     } else {
         if (!contentArea.jquery) {
-            contentArea = contentAreasWrapper.find(contentArea);
+            target = contentAreasWrapper.find(contentArea);
         }
     }
-    
-    if (contentArea.length === 0) {
-        self.error('Content area does not exist!');
+
+    if (target.length === 0) {
+        error('Content area does not exist!');
     }
-    
-    contentArea.html(content);
-    self.initContentArea(contentArea, true);
+
+    target.html(content);
+    initContentArea.call(self, target, true);
 };

@@ -1,30 +1,25 @@
-import CLASS_NAMES from '../constants/classNames';
+import CSS_CLASS from '../constants/cssClass';
+import getDataAttributes from '../utils/getDataAttributes';
+import initComponent from './initComponent';
 
-export default function (contentArea, container, target, isExisting) {
-    if (target.is(`.${CLASS_NAMES.CONTAINER_CONTENT_TOOLBAR}`)) {
+export default function (target, isExisting) {
+    if (target.is(`.${CSS_CLASS.TOOLBAR_CONTAINER_CONTENT}`)) {
         return;
     }
     
     let self = this;
-    let isSection = target.is('section');
     let component;
+    let dataAttributes = getDataAttributes.call(self, target, null, true);
     
-    if (isSection) {
-        target.addClass(`${CLASS_NAMES.UI} ${CLASS_NAMES.COMPONENT}`);
-        target.wrapInner(`<section class="${CLASS_NAMES.UI} ${CLASS_NAMES.COMPONENT_CONTENT}"></section>`);
-        component = target;
-    } else {
-        target.wrap(`
-            <section class="${CLASS_NAMES.UI} ${CLASS_NAMES.COMPONENT}">
-                <section class="${CLASS_NAMES.UI} ${CLASS_NAMES.COMPONENT_CONTENT}"></section>
-            </section>
-        `);
-        component = target.parent().parent();
-    }
+    target.wrap(`<section class="${CSS_CLASS.UI} ${CSS_CLASS.COMPONENT}" data-type="${target.attr('data-type')}" ${dataAttributes.join(' ')}></section>`);
+    target.wrap(`<section class="${CSS_CLASS.UI} ${CSS_CLASS.COMPONENT_CONTENT}"></section>`);
+    component = target.parent().parent();
+    
+    target.removeAttr('data-type');
     
     if (isExisting) {
-        component.addClass(`${CLASS_NAMES.COMPONENT_EXISTING}`);
+        component.addClass(`${CSS_CLASS.COMPONENT_EXISTING}`);
     }
     
-    self.initComponent(contentArea, container, component);
+    initComponent.call(self, component);
 };

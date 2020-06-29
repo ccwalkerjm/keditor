@@ -16,7 +16,7 @@ let PROD = process.env.NODE_ENV === 'production';
 
 module.exports = {
     mode: PROD ? 'production' : 'development',
-    devtool: PROD ? 'source-map' : 'source-map',
+    devtool: PROD ? 'source-map' : 'eval-source-map',
     
     entry: {
         'keditor': './src/keditor/index.js',
@@ -75,11 +75,6 @@ module.exports = {
                                 {
                                     search: '@{version}',
                                     replace: packageJson.version
-                                },
-                                {
-                                    search: '\\n\\s+',
-                                    replace: '',
-                                    flags: 'g'
                                 }
                             ]
                         }
@@ -107,7 +102,7 @@ module.exports = {
     externals: {
         jquery: 'jQuery',
         keditor: 'KEditor',
-        InlineEditor: 'InlineEditor'
+        ckeditor: 'CKEDITOR'
     },
     resolve: {
         modules: [path.resolve('./node_modules'), path.resolve('./src')],

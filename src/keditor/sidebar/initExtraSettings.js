@@ -1,23 +1,35 @@
-import CLASS_NAMES from '../constants/classNames';
+import openSidebar from './openSidebar';
+import initSettingForm from './initSettingForm';
+import SETTING_CATEGORY from '../constants/settingCategory';
 
 export default function () {
     let self = this;
     let options = self.options;
-    let sidebarBody = self.sidebar.find(`.${CLASS_NAMES.SIDEBAR_BODY}`);
     
-    if ($.isPlainObject(options.extraSettings)) {
-        for (let key in options.extraSettings) {
-            let extraSetting = options.extraSettings[key];
-            let form = $(`<div data-extra-setting="${key}" class="${CLASS_NAMES.UI} ${CLASS_NAMES.SETTING_FORM} ${CLASS_NAMES.SETTING_EXTRA}"></div>`);
-            form.html(extraSetting.content);
-            sidebarBody.append(form);
-            
-            let trigger = typeof extraSetting.trigger === 'function' ? extraSetting.trigger.call(this, extraSetting) : extraSetting.trigger;
-            trigger.on('click', function (e) {
-                e.preventDefault();
-                
-                self.openSidebar(trigger);
-            })
+    $.isPlainObject(options.extraSettings) && $.each(options.extraSettings, (name, extraSetting) => {
+        let trigger;
+        switch (typeof extraSetting.trigger) {
+            case 'function':
+                trigger = extraSetting.trigger.call(self, extraSetting);
+                break;
+        
+            case 'string':
+                trigger = $(extraSetting.trigger);
+                break;
+        
+            default:
+                trigger = extraSetting.trigger;
         }
-    }
+    
+        trigger.attr('data-extra-setting', name);
+        trigger.on('click', function (e) {
+            e.preventDefault();
+        
+            openSidebar.call(self, trigger);
+        });
+        
+        if (extraSetting.autoInit) {
+            initSettingForm.call(self, trigger, name, SETTING_CATEGORY.EXTRA, extraSetting.settingInitFunction, extraSetting);
+        }
+    });
 };
